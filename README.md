@@ -74,7 +74,7 @@ Finally, just add `RosaScheduler(model)` as a callback to the Trainer. `RosaSche
 ## RoSA Schedule
 The `schedule` argument in `RosaConfig` determines when each of low-rank and sparse adapters should be active, and when to generate the sparsity masks. The (currently) supported options are discussed below.
 
-- `default`: the sparse and low-rank adapters wiil be enabled as soon as possible. This means that the low-rank adapter is always activated, and gradient collection will start right away and the sparse adapter will be activated once the masks are generated.
+- `default`: the sparse and low-rank adapters will be enabled as soon as possible. This means that the low-rank adapter is always activated, and gradient collection will start right away and the sparse adapter will be activated once the masks are generated.
 - `lora_only`: the low-rank adapter is always active, while the sparse adapter is disabled.
 - `spa_only`: the low-rank adapter is always disabled, while the sparse adapter will be activated once enough gradients are collected.
 - `wl64` (or `wl` + any number): start by fine-tuning the low-rank adapter alone for 64 steps, then collect gradients as long as needed and activate sparse adaptation.
@@ -82,4 +82,4 @@ The `schedule` argument in `RosaConfig` determines when each of low-rank and spa
 Finally, as discussed in the paper, we found it beneficial to warm up with low-rank adapter only (`wl64` schedule), generate the masks, and then restart the training with both adapters activated. To do this, we suggest following the steps below, taking advantage of three extra paramters in `RosaConfig`.
 
 1. First run your RoSA training with `schedule=wl64`, `mask_save_path=./tmp_mask`, and `terminate_after_mask_generation=True` passed into `RosaConfig`, which saves the generated mask (after low-rank warmup) in the `./tmp_mask` file and terminates the run.
-2. Re-run the training with `schedule=default` and `mask_load_path=./tmp_mask`, which loads the masks directly from the file and activates both low-rank and sparse adapter right away.
+2. Re-run the training with `schedule=default` and `mask_load_path=./tmp_mask`, which loads the masks directly from the file and activates both low-rank and sparse adapters right away.
