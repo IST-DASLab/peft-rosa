@@ -19,7 +19,7 @@ limitations under the License.
 This repository is a fork of the [huggingface PEFT library](https://github.com/huggingface/peft), containing the official implementation for the paper [Robust Adaptation (RoSA)](https://arxiv.org/abs/2401.04679). Also [here](https://github.com/IST-DASLab/RoSA), we have integrated this library into [MosaicML's llm-foundry](https://github.com/mosaicml/llm-foundry), containing the experiments reported in the paper. 
 
 ## Installation
-1. Make sure you have [pytorch](https://pytorch.org/) installed.
+1. Make sure you have [pytorch](https://pytorch.org/) installed. Preferably, install pytorch using conda instead of pip to ensure the dependencies are installed correctly.
 2. Install the [*spops*](https://github.com/IST-DASLab/spops) library, which we use under the hood to perform sparse operations. Simply run 
 ```
 pip install git+https://github.com/IST-DASLab/spops.git
