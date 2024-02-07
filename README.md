@@ -68,7 +68,7 @@ The new config paramters, in line with the paper, are the following ones:
 - `schedule`: TL;DR just use `wl64` to warm up with only low-rank adapter for 64 steps, and then start collecting gradients for sparse adaptation's mask generation. See the next section for a complete guide.
 
 
-Finally, just add `RosaScheduler(model)` as a callback to the Trainer. `RosaScheduler` is also compatible with [MosaicML's composer](https://github.com/mosaicml/composer) (just add it as an Algorithm). Additionally, you can customize it for any other framework by just calling scheduler's `_on_step_begin()` and `_on_step_end()` before forward and after backward, respectively.
+Finally, just add `RosaScheduler(model)` as a callback to the Trainer. `RosaScheduler` is also compatible with [MosaicML's composer](https://github.com/mosaicml/composer) (just add it as an Algorithm). Additionally, you can customize it for any other framework by calling scheduler's `_on_step_begin()` and `_on_step_end()` before forward and after backward, respectively.
 
 
 ## RoSA Schedule
