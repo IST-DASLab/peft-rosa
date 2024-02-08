@@ -31,7 +31,7 @@ pip install -e .
 ```
 
 ## Usage
-The usage is almost identical to LoRA in the PEFT library, with some extra configuration paramters in RosaConfig + a single line of code adding a `RosaScheduler`. The required changes are shown in the code block below.
+The usage is almost identical to LoRA in the PEFT library, with some extra configuration parameters in RosaConfig + a single line of code adding a `RosaScheduler`. The required changes are shown in the code block below.
 
 ```
 from transformers import AutoModelForSeq2SeqLM
