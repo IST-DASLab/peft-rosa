@@ -83,3 +83,16 @@ Finally, as discussed in the paper, we found it beneficial to warm up with low-r
 
 1. First run your RoSA training with `schedule=wl64`, `mask_save_path=./tmp_mask`, and `terminate_after_mask_generation=True` passed into `RosaConfig`, which saves the generated mask (after low-rank warmup) in the `./tmp_mask` file and terminates the run.
 2. Re-run the training with `schedule=default` and `mask_load_path=./tmp_mask`, which loads the masks directly from the file and activates both low-rank and sparse adapters right away.
+
+
+## Citation
+If you plan to use our work in you projects, please consider citing our paper:
+
+```
+@article{nikdan2024rosa,
+  title={RoSA: Accurate Parameter-Efficient Fine-Tuning via Robust Adaptation},
+  author={Nikdan, Mahdi and Tabesh, Soroush and Crnčević, Elvir and Alistarh, Dan},
+  journal={arXiv preprint arXiv:2401.04679},
+  year={2024}
+}
+```
