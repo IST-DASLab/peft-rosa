@@ -16,7 +16,7 @@ limitations under the License.
 
 <h1 align="center"> <p>🤗 PEFT-RoSA</p></h1>
 
-This repository is a fork of the [huggingface PEFT library](https://github.com/huggingface/peft), containing the official implementation for the paper [Robust Adaptation (RoSA)](https://arxiv.org/abs/2401.04679). Also [here](https://github.com/IST-DASLab/RoSA), we have integrated this library into [MosaicML's llm-foundry](https://github.com/mosaicml/llm-foundry), containing the experiments reported in the paper. 
+This repository is a fork of the [huggingface Parameter-Efficient Fine-Tuning (PEFT) library](https://github.com/huggingface/peft), containing the official implementation for the paper [Robust Adaptation (RoSA)](https://arxiv.org/abs/2401.04679). The RoSA-related code can be found in [`src/peft/tuners/rosa/`](https://github.com/IST-DASLab/peft-rosa/tree/main/src/peft/tuners/rosa). Also [here](https://github.com/IST-DASLab/RoSA), we have integrated this library into [MosaicML's llm-foundry](https://github.com/mosaicml/llm-foundry), containing the experiments reported in the paper. 
 
 ## Installation
 1. Make sure you have [pytorch](https://pytorch.org/) installed. Preferably, install pytorch using conda instead of pip to ensure the dependencies are installed correctly.
