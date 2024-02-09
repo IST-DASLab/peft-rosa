@@ -86,7 +86,7 @@ Finally, as discussed in the paper, we found it beneficial to warm up with low-r
 
 
 ## Citation
-If you plan to use our work in you projects, please consider citing our paper:
+If you plan to use our work in your projects, please consider citing our paper:
 
 ```
 @article{nikdan2024rosa,
