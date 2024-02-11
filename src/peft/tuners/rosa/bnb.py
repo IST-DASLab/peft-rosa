@@ -164,8 +164,6 @@ if is_bnb_available():
             return output_tensor
 
         def forward(self, x: torch.Tensor, *args, **kwargs) -> torch.Tensor:
-            x = self._add_dummy(x)
-
             if self.disable_adapters:
                 if self.merged:
                     self.unmerge()
@@ -173,36 +171,41 @@ if is_bnb_available():
             elif self.merged:
                 result = self.base_layer(x, *args, **kwargs)
             else:
+                assert len(self.active_adapters) == 1, 'rosa only supports precisely one adapter'
+                active_adapter = self.active_adapters[0]
+                assert active_adapter in self.rosa_A.keys()
+
+                if self.r[active_adapter] == 0 and not self._spa_exists(active_adapter):
+                    # we are collecting gradients while lora deos not exist
+                    # adding a dummy to the input to enable gradient propagation
+                    x = self._add_dummy(x)
+
                 result = self.base_layer(x, *args, **kwargs)
-                for active_adapter in self.active_adapters:
-                    if active_adapter not in self.rosa_A.keys():
-                        continue
-                    
-                    requires_conversion = not torch.is_autocast_enabled()
+                requires_conversion = not torch.is_autocast_enabled()
 
-                    if self.r[active_adapter] > 0:
-                        rosa_A = self.rosa_A[active_adapter]
-                        rosa_B = self.rosa_B[active_adapter]
-                        dropout = self.lora_dropout[active_adapter]
-                        scaling = self.scaling[active_adapter]
+                if self.r[active_adapter] > 0:
+                    rosa_A = self.rosa_A[active_adapter]
+                    rosa_B = self.rosa_B[active_adapter]
+                    dropout = self.lora_dropout[active_adapter]
+                    scaling = self.scaling[active_adapter]
 
-                        if requires_conversion:
-                            expected_dtype = result.dtype
-                            compute_dtype = rosa_A.weight.dtype
-                            if x.dtype != compute_dtype:
-                                x = x.to(compute_dtype)
-                        output = rosa_B(rosa_A(dropout(x)))
-                        if requires_conversion:
-                            output = output.to(expected_dtype)
-                        output = output * scaling
-                        result += output
+                    if requires_conversion:
+                        expected_dtype = result.dtype
+                        compute_dtype = rosa_A.weight.dtype
+                        if x.dtype != compute_dtype:
+                            x = x.to(compute_dtype)
+                    output = rosa_B(rosa_A(dropout(x)))
+                    if requires_conversion:
+                        output = output.to(expected_dtype)
+                    output = output * scaling
+                    result += output
 
-                    if self._spa_exists(active_adapter):
-                        spa_module = self.rosa_spa[active_adapter]
-                        spa_result = spa_module(x)
-                        if requires_conversion:
-                            spa_result = spa_result.to(result.dtype)
-                        result += spa_result
+                if self._spa_exists(active_adapter):
+                    spa_module = self.rosa_spa[active_adapter]
+                    spa_result = spa_module(x)
+                    if requires_conversion:
+                        spa_result = spa_result.to(result.dtype)
+                    result += spa_result
 
             return result
 
@@ -345,8 +348,6 @@ if is_bnb_4bit_available():
             return output_tensor
 
         def forward(self, x: torch.Tensor, *args, **kwargs) -> torch.Tensor:
-            x = self._add_dummy(x)
-
             if self.disable_adapters:
                 if self.merged:
                     self.unmerge()
@@ -357,6 +358,11 @@ if is_bnb_4bit_available():
                 assert len(self.active_adapters) == 1, 'rosa only supports precisely one adapter'
                 active_adapter = self.active_adapters[0]
                 assert active_adapter in self.rosa_A.keys()
+
+                if self.r[active_adapter] == 0 and not self._spa_exists(active_adapter):
+                    # we are collecting gradients while lora deos not exist
+                    # adding a dummy to the input to enable gradient propagation
+                    x = self._add_dummy(x)
 
                 requires_conversion = not torch.is_autocast_enabled()
                 if self.impl == 'spmm' or not self._spa_exists(active_adapter): # sp_add implementation is suboptimal when spa does not exist

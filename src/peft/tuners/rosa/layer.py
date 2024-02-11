@@ -450,8 +450,6 @@ class Linear(nn.Module, RosaLayer):
         return output_tensor
 
     def forward(self, x: torch.Tensor, *args: Any, **kwargs: Any) -> torch.Tensor:
-        x = self._add_dummy(x)
-
         previous_dtype = x.dtype
         if self.disable_adapters:
             if self.merged:
@@ -463,6 +461,11 @@ class Linear(nn.Module, RosaLayer):
             assert len(self.active_adapters) == 1, 'rosa only supports precisely one adapter'
             active_adapter = self.active_adapters[0]
             assert active_adapter in self.rosa_A.keys()
+
+            if self.r[active_adapter] == 0 and not self._spa_exists(active_adapter):
+                # we are collecting gradients while lora deos not exist
+                # adding a dummy to the input to enable gradient propagation
+                x = self._add_dummy(x)
 
             if self.impl == 'spmm' or not self._spa_exists(active_adapter): # sp_add implementation is suboptimal when spa does not exist
                 result = self.base_layer(x, *args, **kwargs)

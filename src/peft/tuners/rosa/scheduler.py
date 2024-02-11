@@ -155,7 +155,7 @@ class RosaScheduler(TrainerCallback, COMPOSER_ALG_CLASS):
                 #     weight.requires_grad = True
                 #     handle = weight.register_post_accumulate_grad_hook(GradCollectorHook(name, module, self._grad_acc_mode))
                 #     self._handles.append(handle)
-                # else:
+
                 # the weight cannot require grad if it's not floating point
                 # we employ two hooks to capture input and grad_output then
                 # multiply the two to get the gradients
