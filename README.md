@@ -16,7 +16,7 @@ limitations under the License.
 
 <h1 align="center"> <p>🤗 PEFT-RoSA</p></h1>
 
-This repository is a fork of the [huggingface PEFT library](https://github.com/huggingface/peft), containing the official implementation for the paper [Robust Adaptation (RoSA)](https://arxiv.org/abs/2401.04679). Also [here](https://github.com/IST-DASLab/RoSA), we have integrated this library into [MosaicML's llm-foundry](https://github.com/mosaicml/llm-foundry), containing the experiments reported in the paper. 
+This repository is a fork of the [huggingface Parameter-Efficient Fine-Tuning (PEFT) library](https://github.com/huggingface/peft), containing the official implementation for the paper [Robust Adaptation (RoSA)](https://arxiv.org/abs/2401.04679). The RoSA-related code can be found in [`src/peft/tuners/rosa/`](https://github.com/IST-DASLab/peft-rosa/tree/main/src/peft/tuners/rosa). Also [here](https://github.com/IST-DASLab/RoSA), we have integrated this library into [MosaicML's llm-foundry](https://github.com/mosaicml/llm-foundry), containing the experiments reported in the paper. 
 
 ## Installation
 1. Make sure you have [pytorch](https://pytorch.org/) installed. Preferably, install pytorch using conda instead of pip to ensure the dependencies are installed correctly.
@@ -31,7 +31,7 @@ pip install -e .
 ```
 
 ## Usage
-The usage is almost identical to LoRA in the PEFT library, with some extra configuration paramters in RosaConfig + a single line of code adding a `RosaScheduler`. The required changes are shown in the code block below.
+The usage is almost identical to LoRA in the PEFT library, with some extra configuration parameters in RosaConfig + a single line of code adding a `RosaScheduler`. The required changes are shown in the code block below.
 
 ```
 from transformers import AutoModelForSeq2SeqLM
@@ -61,7 +61,7 @@ trainer = Trainer(
 )
 ```
 
-The new config paramters, in line with the paper, are the following ones:
+The new config parameters, in line with the paper, are the following ones:
 - `d`: Density of the sparse adaptation matrix. 
 - `spa_num_grads`: How many batches of gradients to use for RoSA mask generation. One batch (the default value) usually works well.
 - `grad_acc_mode`: How to accumulate the gradients. `mean_squared` corresponds to the empirical diagonal Fisher estimation, while `mean` corresponds to simply averaging the gradients. `mean_squared` is default, and usually obtains good results.
@@ -79,14 +79,14 @@ The `schedule` argument in `RosaConfig` determines when each of low-rank and spa
 - `spa_only`: the low-rank adapter is always disabled, while the sparse adapter will be activated once enough gradients are collected.
 - `wl64` (or `wl` + any number): start by fine-tuning the low-rank adapter alone for 64 steps, then collect gradients as long as needed and activate sparse adaptation.
 
-Finally, as discussed in the paper, we found it beneficial to warm up with low-rank adapter only (`wl64` schedule), generate the masks, and then restart the training with both adapters activated. To do this, we suggest following the steps below, taking advantage of three extra paramters in `RosaConfig`.
+Finally, as discussed in the paper, we found it beneficial to warm up with low-rank adapter only (`wl64` schedule), generate the masks, and then restart the training with both adapters activated. To do this, we suggest following the steps below, taking advantage of three extra parameters in `RosaConfig`.
 
 1. First run your RoSA training with `schedule=wl64`, `mask_save_path=./tmp_mask`, and `terminate_after_mask_generation=True` passed into `RosaConfig`, which saves the generated mask (after low-rank warmup) in the `./tmp_mask` file and terminates the run.
 2. Re-run the training with `schedule=default` and `mask_load_path=./tmp_mask`, which loads the masks directly from the file and activates both low-rank and sparse adapters right away.
 
 
 ## Citation
-If you plan to use our work in you projects, please consider citing our paper:
+If you plan to use our work in your projects, please consider citing our paper:
 
 ```
 @article{nikdan2024rosa,
