@@ -304,6 +304,7 @@ if is_bnb_4bit_available():
                         f"NaNs detected in the merged weights. The adapter {active_adapter} seems to be broken"
                     )
 
+                kwargs["bnb_quantized"] = False # Telling bnb to actually requantize the weight
                 self.get_base_layer().weight = bnb.nn.Params4bit(w_data.to("cpu"), requires_grad=False, **kwargs).to(
                     weight.device
                 )
