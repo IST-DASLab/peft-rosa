@@ -31,6 +31,7 @@ class RosaScheduler(TrainerCallback, COMPOSER_ALG_CLASS):
         self._spa_num_grads = getattr(config, 'spa_num_grads', 1)
         self._grad_acc_mode = getattr(config, 'grad_acc_mode', 'mean_squared')
         self._terminate_after_mask_generation = getattr(config, 'terminate_after_mask_generation', False)
+        self._grad_4bit_accum = getattr(config, 'grad_4bit_accum', False)
         
         self._d = getattr(config, 'd', 0.)
         self._r = getattr(config, 'r', 0)
@@ -159,7 +160,8 @@ class RosaScheduler(TrainerCallback, COMPOSER_ALG_CLASS):
                 # the weight cannot require grad if it's not floating point
                 # we employ two hooks to capture input and grad_output then
                 # multiply the two to get the gradients
-                quant_config = QuantConfig(4, 128)
+
+                quant_config = QuantConfig(4, 128) if self._grad_4bit_accum else None
                 handle1 = module.register_forward_hook(SaveInputHook(name, module))
                 handle2 = module.register_full_backward_hook(ManualGradCollectorHook(name, module, self._grad_acc_mode, quant_config))
                 self._handles.append(handle1)

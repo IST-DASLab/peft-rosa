@@ -44,6 +44,8 @@ class RosaConfig(PeftConfig):
             The alpha parameter for Lora scaling.
         lora_dropout (`float`):
             The dropout probability for Lora layers.
+        grad_4bit_accum (`bool`):
+            Whether to accumulate the gradients (for mask generation) in 4bit precision to save CPU memory. Default is False.
         impl (`str`):
             Which implementation of RoSA to use. Options are 'spmm', 'sp_add', and 'auto'.
             Normally, sp_add should be faster and more memory efficient, but it may
@@ -132,6 +134,7 @@ class RosaConfig(PeftConfig):
         "Normally, sp_add should be faster and more memory efficient, but it may"
         "be slower when the weights are quantized."
     )})
+    grad_4bit_accum: bool = field(default=False, metadata={"help": "Whether to accumulate gradients in 4bit"})
     spa_store_transpose: bool = field(default=True, metadata={"help": "Whether to store the transposed SpA matrix"})
     spa_num_grads: int = field(default=1, metadata={"help": "number of gradients to use for SpA mask generation"})
     grad_acc_mode: str = field(default='mean_squared', metadata={"help": "how to accumulate gradients for mask generation. Options are 'mean_squared' (diagonal fisher) and 'mean'."})
