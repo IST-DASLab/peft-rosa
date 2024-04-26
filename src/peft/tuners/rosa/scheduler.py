@@ -4,7 +4,7 @@ from .layer import RosaLayer
 from .hooks import SaveInputHook, ManualGradCollectorHook
 from typing import List, Dict
 from transformers import TrainerCallback
-
+from .quantization import QuantConfig
 
 try:
     from composer.core import Algorithm, Event
@@ -159,8 +159,9 @@ class RosaScheduler(TrainerCallback, COMPOSER_ALG_CLASS):
                 # the weight cannot require grad if it's not floating point
                 # we employ two hooks to capture input and grad_output then
                 # multiply the two to get the gradients
+                quant_config = QuantConfig(4, 128)
                 handle1 = module.register_forward_hook(SaveInputHook(name, module))
-                handle2 = module.register_full_backward_hook(ManualGradCollectorHook(name, module, self._grad_acc_mode))
+                handle2 = module.register_full_backward_hook(ManualGradCollectorHook(name, module, self._grad_acc_mode, quant_config))
                 self._handles.append(handle1)
                 self._handles.append(handle2)
             else:
@@ -207,8 +208,8 @@ class RosaScheduler(TrainerCallback, COMPOSER_ALG_CLASS):
 
             assert hasattr(module, 'collected_grad'), 'target module must have a collected_grad for mask generation, something is wrong!'
             print(f'generating spa mask for {name} with {module.collected_grad_cnt} grads.')
-
-            masks[name] = self._grad_to_mask_fn(module.collected_grad)
+            collected_grad = module.quantizer.dequantize(module.collected_grad, module.quant_meta).reshape(module._get_weight_shape())
+            masks[name] = self._grad_to_mask_fn(collected_grad)
             delattr(module, 'collected_grad')
             delattr(module, 'collected_grad_cnt')
             if hasattr(module, 'saved_input'):

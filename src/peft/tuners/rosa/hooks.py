@@ -1,5 +1,6 @@
 import torch
 from .layer import RosaLayer
+from .quantization import QuantConfig, Quantizer
 
 class GradCollectorHook:
     def __init__(self, name: str, module: RosaLayer, grad_acc_mode: str) -> None:
@@ -50,11 +51,12 @@ class SaveInputHook:
         print(f'saved input for {self._name}')
 
 class ManualGradCollectorHook:
-    def __init__(self, name: str, module: RosaLayer, grad_acc_mode: str) -> None:
+    def __init__(self, name: str, module: RosaLayer, grad_acc_mode: str, quant_config: QuantConfig = None) -> None:
         assert grad_acc_mode in ['mean', 'mean_squared']
         self._name = name
         self._module = module
         self._grad_acc_mode = grad_acc_mode
+        self._module.quantizer = Quantizer(quant_config)
 
     def __call__(self, model, grad_in, grad_out):
         print('hook called for', self._name)
@@ -76,14 +78,18 @@ class ManualGradCollectorHook:
             new_grad = new_grad.cpu()
 
             if not hasattr(self._module, 'collected_grad'):
-                self._module.register_buffer('collected_grad', torch.zeros_like(new_grad))
+                self._module.register_buffer('collected_grad', self._module.quantizer.get_compressed_buffer(new_grad))
+                self._module.register_buffer('quant_meta', self._module.quantizer.get_metadata_buffer(new_grad))
                 setattr(self._module, 'collected_grad_cnt', 0)
 
             prev_grad = self._module.collected_grad
+            prev_grad = self._module.quantizer.dequantize(prev_grad, self._module.quant_meta)
+            prev_grad = prev_grad.reshape(new_grad.shape)
             prev_cnt = getattr(self._module, 'collected_grad_cnt')
 
             new_cnt = prev_cnt + 1
-            self._module.collected_grad = (prev_grad * prev_cnt + new_grad) / new_cnt
+            self._module.quantizer.quantize((prev_grad * prev_cnt + new_grad) / new_cnt, self._module.collected_grad,
+                                            self._module.quant_meta)
             self._module.collected_grad_cnt = new_cnt
 
             self._module.saved_input.zero_()
