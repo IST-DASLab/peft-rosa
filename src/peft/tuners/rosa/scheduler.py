@@ -211,6 +211,7 @@ class RosaScheduler(TrainerCallback, COMPOSER_ALG_CLASS):
             collected_grad = module.quantizer.dequantize(module.collected_grad, module.quant_meta).reshape(module._get_weight_shape())
             masks[name] = self._grad_to_mask_fn(collected_grad)
             delattr(module, 'collected_grad')
+            delattr(module, 'quant_meta')
             delattr(module, 'collected_grad_cnt')
             if hasattr(module, 'saved_input'):
                 delattr(module, 'saved_input')

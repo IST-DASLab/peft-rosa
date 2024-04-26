@@ -47,6 +47,7 @@ class Quantizer:
     def quantize(self, t: torch.Tensor, output: torch.Tensor, meta: torch.Tensor):
         if not self.is_enabled:
             output.copy_(t)
+            return
         if t.numel() & 1 and self._config.bits == 4:
             raise ValueError("Uneven sizes of tensors with quantization to 4 bits are not supported")
         target_device = t.device
@@ -138,7 +139,7 @@ if __name__ == "__main__":
     tensor = torch.rand(36, dtype=torch.float16)
     print(tensor)
     config = QuantConfig(4, 8)
-    quantizer = Quantizer(config)
+    quantizer = Quantizer(None)
     qmeta = quantizer.get_metadata_buffer(tensor)
     buffer = quantizer.get_compressed_buffer(tensor)
     quantizer.quantize(tensor, buffer, qmeta)
