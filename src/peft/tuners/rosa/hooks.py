@@ -92,4 +92,4 @@ class ManualGradCollectorHook:
                                             self._module.quant_meta)
             self._module.collected_grad_cnt = new_cnt
 
-            self._module.saved_input.zero_()
+            self._module.saved_input = None
