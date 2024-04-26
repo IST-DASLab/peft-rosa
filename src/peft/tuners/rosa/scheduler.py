@@ -1,10 +1,12 @@
 import torch
+import os
 from .model import RosaModel
 from .layer import RosaLayer
 from .hooks import SaveInputHook, ManualGradCollectorHook
 from typing import List, Dict
 from transformers import TrainerCallback
 from .quantization import QuantConfig
+import gc
 
 try:
     from composer.core import Algorithm, Event
@@ -32,7 +34,7 @@ class RosaScheduler(TrainerCallback, COMPOSER_ALG_CLASS):
         self._grad_acc_mode = getattr(config, 'grad_acc_mode', 'mean_squared')
         self._terminate_after_mask_generation = getattr(config, 'terminate_after_mask_generation', False)
         self._grad_4bit_accum = getattr(config, 'grad_4bit_accum', False)
-        
+
         self._d = getattr(config, 'd', 0.)
         self._r = getattr(config, 'r', 0)
 
@@ -43,7 +45,14 @@ class RosaScheduler(TrainerCallback, COMPOSER_ALG_CLASS):
                 assert self._mask_load_path is None
 
             if self._mask_load_path is not None:
-                self._set_spa_masks(torch.load(self._mask_load_path))
+                masks = {}
+                for f in os.listdir(self._mask_load_path):
+                    if not f.endswith('.mask'):
+                        continue
+                    data = torch.load(os.path.join(self._mask_load_path, f))
+                    masks[data['name']] = data['mask']
+                    print(f'loaded mask for {data["name"]}')
+                self._set_spa_masks(masks)
 
         schedule_name = getattr(config, 'schedule', None)
         self._schedule = self._create_schedule(schedule_name)
@@ -199,28 +208,35 @@ class RosaScheduler(TrainerCallback, COMPOSER_ALG_CLASS):
         return mask
 
     @torch.no_grad()
-    def _generate_masks_and_activate_spa(self, model):
+    def _generate_masks_and_activate_spa(self, model):        
         print('generating masks and activating spa')
         assert self._d > 0, 'mask generation requires spa density to be > 0'
 
         masks = {}
+        os.makedirs(self._mask_save_path, exist_ok=False)
         for name, module in model.named_modules():
             if not isinstance(module, RosaLayer):
                 continue
 
             assert hasattr(module, 'collected_grad'), 'target module must have a collected_grad for mask generation, something is wrong!'
-            print(f'generating spa mask for {name} with {module.collected_grad_cnt} grads.')
             collected_grad = module.quantizer.dequantize(module.collected_grad, module.quant_meta).reshape(module._get_weight_shape())
-            masks[name] = self._grad_to_mask_fn(collected_grad)
+            
+            mask = self._grad_to_mask_fn(collected_grad)
+            torch.save({'name': name, 'mask': mask}, os.path.join(self._mask_save_path, name + '.mask'))
+            print(f'saved the mask for {name}')
+
+            if not self._terminate_after_mask_generation:
+                masks[name] = mask
+
             delattr(module, 'collected_grad')
             delattr(module, 'quant_meta')
             delattr(module, 'collected_grad_cnt')
             if hasattr(module, 'saved_input'):
                 delattr(module, 'saved_input')
+            gc.collect()
         
         if self._mask_save_path is not None:
             print('saving the masks...')
-            torch.save(masks, self._mask_save_path)
             print('masks saved.')
         
         if self._terminate_after_mask_generation:
