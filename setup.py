@@ -53,7 +53,7 @@ setup(
         "torch>=2.1.2",
         "transformers>=4.31.0",
         "tqdm",
-        "accelerate>=0.26.1",
+        "accelerate>=0.26",
         "safetensors>=0.4.1",
         "huggingface_hub>=0.20.1",
         "setuptools"
